@@ -3,14 +3,16 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.response.ResponseBody;
 import io.restassured.specification.RequestSpecification;
-import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import requestObject.RequestUser;
+import responseObject.ResponseToken;
+import responseObject.ResponseUser;
 
 public class CreateUserTest {
 
     public String baseURI = "https://demoqa.com";
-    public JSONObject requestBody;
+    public RequestUser requestBody;
     @Test
     public void testMethod() {
         System.out.println("===== STEP 1 : Create account =====");
@@ -28,13 +30,11 @@ public class CreateUserTest {
         request.contentType(ContentType.JSON);
         request.baseUri(baseURI);
 
-        String username ="IoanaTesting" + System.currentTimeMillis();
-        requestBody = new JSONObject();
-        requestBody.put("userName", username);
-        requestBody.put("password","Automation123!@");
+       requestBody = new RequestUser("src/test/resources/createUser.json");
 
         // Adaugam request body
-        request.body(requestBody.toString());
+        System.out.println(requestBody);
+        request.body(requestBody);
 
         // Executam request-ul de tip POST la un endpoint specific
         Response response = request.post("/Account/v1/User");
@@ -45,9 +45,10 @@ public class CreateUserTest {
 
         Assert.assertTrue(response.getStatusLine().contains("Created"));
 
-        ResponseBody responseBody = response.getBody();
-        Assert.assertTrue(responseBody.asPrettyString().contains(username));
-
+        System.out.println(response.getStatusCode());
+        ResponseUser responseBody = response.getBody().as(ResponseUser.class);
+        Assert.assertTrue(responseBody.getUsername().equals(requestBody.getUserName()));
+        System.out.println(responseBody);
     }
 
     public void generateToken(){
@@ -59,7 +60,7 @@ public class CreateUserTest {
         request.baseUri(baseURI);
 
         // Adaugam request body
-        request.body(requestBody.toString());
+        request.body(requestBody);
 
         // Executam request-ul de tip POST la un endpoint specific
         Response response = request.post("/Account/v1/GenerateToken");
@@ -70,8 +71,11 @@ public class CreateUserTest {
 
         Assert.assertTrue(response.getStatusLine().contains("OK"));
 
-        ResponseBody responseBody = response.getBody();
-        Assert.assertTrue(responseBody.asPrettyString().contains("token"));
+        ResponseToken responseBody = response.getBody().as(ResponseToken.class);
+        System.out.println(responseBody.getToken());
 
+        System.out.println(responseBody);
+
+        System.out.println(response.getHeaders());
     }
 }
