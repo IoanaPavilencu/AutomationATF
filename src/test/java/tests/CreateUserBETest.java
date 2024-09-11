@@ -15,12 +15,13 @@ import pages.LoginPage;
 import requestObject.RequestUser;
 import responseObject.ResponseToken;
 import responseObject.ResponseUser;
+import service.AccountService;
 
 import java.time.Duration;
 
 public class CreateUserBETest {
 
-    public String baseURI = "https://demoqa.com";
+    public AccountService accountService;
     public RequestUser requestBody;
     public WebDriver driver;
     public String userId;
@@ -47,80 +48,31 @@ public class CreateUserBETest {
         System.out.println("===== STEP 6 : Get user details =====");
         validateAccountBE();
 
-
     }
 
     public void createAccount(){
 
         // Definesc configurarea clientului
         // Definim un request(pe baza clientului)
-        RequestSpecification request = RestAssured.given();
-        request.contentType(ContentType.JSON);
-        request.baseUri(baseURI);
 
        requestBody = new RequestUser("src/test/resources/createUser.json");
+        accountService =new AccountService();
 
-        // Adaugam request body
-        System.out.println(requestBody);
-        request.body(requestBody);
-
-        // Executam request-ul de tip POST la un endpoint specific
-        Response response = request.post("/Account/v1/User");
-
-        // Validam response status code
-        System.out.println(response.getStatusCode());
-        Assert.assertEquals(response.getStatusCode(),201);
-
-        Assert.assertTrue(response.getStatusLine().contains("Created"));
-
-        System.out.println(response.getStatusCode());
-        ResponseUser responseBody = response.getBody().as(ResponseUser.class);
-        Assert.assertTrue(responseBody.getUsername().equals(requestBody.getUserName()));
-        System.out.println(responseBody);
+        ResponseUser responseBody = accountService.createAccount(requestBody);
         userId = responseBody.getUserId();
     }
 
     public void generateToken(){
 
-        // Definesc configurarea clientului
-        // Definim un request(pe baza clientului)
-        RequestSpecification request = RestAssured.given();
-        request.contentType(ContentType.JSON);
-        request.baseUri(baseURI);
-
-        // Adaugam request body
-        request.body(requestBody);
-
-        // Executam request-ul de tip POST la un endpoint specific
-        Response response = request.post("/Account/v1/GenerateToken");
-
         // Validam response status code
-        System.out.println(response.getStatusCode());
-        Assert.assertEquals(response.getStatusCode(),200);
 
-        Assert.assertTrue(response.getStatusLine().contains("OK"));
-
-        ResponseToken responseBody = response.getBody().as(ResponseToken.class);
-        System.out.println(responseBody.getToken());
-
-        System.out.println(responseBody);
-
+        ResponseToken responseBody = accountService.generateToken(requestBody);
         token = responseBody.getToken();
 
-        //System.out.println(response.getHeaders());
     }
     public void validateAccountBE(){
-        RequestSpecification request = RestAssured.given();
-        request.contentType(ContentType.JSON);
-        request.baseUri(baseURI);
 
-        request.header("Authorization", "Bearer" + token);
-
-        Response response = request.get("/Account/v1/User/" + userId);
-
-        response.body().prettyPrint();
-
-
+        accountService.validateAccountBE(token, userId);
     }
 
     public void loginApplication(){
@@ -137,15 +89,7 @@ public class CreateUserBETest {
 
 
     public void deleteAccountBE(){
-        RequestSpecification request = RestAssured.given();
-        request.contentType(ContentType.JSON);
-        request.baseUri(baseURI);
 
-        request.header("Authorization", "Bearer" + token);
-
-        Response response = request.delete("/Account/v1/User/" + userId);
-
-        response.body().prettyPrint();
-
+        accountService.deleteAccountBE(token, userId);
     }
 }
